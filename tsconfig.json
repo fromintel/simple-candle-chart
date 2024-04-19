@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "*": ["node_modules/*"]
+    },
+    "types": ["webpack-env", "node"],
+    "noImplicitAny": true,
+    "strict": true
+  },
+  "include": [
+    "src/**/*",
+    "webpack.config.ts"
+  ],
+  "exclude": ["node_modules"]
+}
