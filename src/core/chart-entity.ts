@@ -1,4 +1,5 @@
 import { ConvertedBarData } from "../models/bar";
+import { Candle } from "./candle";
 
 export class CandleChart {
     private readonly width: number;
@@ -107,7 +108,7 @@ export class CandleChart {
             if (barIndex < this.data.length) {
                 const bar = this.data[barIndex];
                 const x = i * (this.barWidth + this.barGap);
-                this.drawCandle(bar, x, scaleY, minPrice);
+                new Candle(this.ctx, this.barWidth, bar, x, scaleY, minPrice, this.height).draw();
 
                 if (barIndex % this.calculateDateDisplayInterval() === 0) {
                     this.drawDate(bar.date, x);
@@ -137,27 +138,6 @@ export class CandleChart {
         this.barWidth = (this.width - this.infoBarWidth) / this.displayedBarsCount - this.barGap;
 
         this.drawChart();
-    }
-
-    private drawCandle(bar: ConvertedBarData, x: number, scaleY: number, minPrice: number) {
-        const yHigh = (bar.high - minPrice) * scaleY;
-        const yLow = (bar.low - minPrice) * scaleY;
-        const yOpen = (bar.open - minPrice) * scaleY;
-        const yClose = (bar.close - minPrice) * scaleY;
-
-        if (!this.ctx) {
-            return;
-        }
-
-        // High-Low line drawing
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + 5, this.height - yHigh);
-        this.ctx.lineTo(x + 5, this.height - yLow);
-        this.ctx.stroke();
-
-        // Drawing an Open-Close rectangle
-        this.ctx.fillStyle = bar.open > bar.close ? 'red' : 'green';
-        this.ctx.fillRect(x, this.height - Math.max(yOpen, yClose), 10, Math.abs(yOpen - yClose));
     }
 
     private drawInfoBar() {
