@@ -8,6 +8,7 @@ export class CandleChart {
     private canvas: HTMLCanvasElement;
     private readonly ctx: CanvasRenderingContext2D | null;
     private readonly chartMargin: number;
+    private readonly infoBarWidth: number;
 
     constructor(options: { el: HTMLElement, data: ConvertedBarData[], width?: number, height?: number, animationSpeed?: number }) {
         if (!options.el) throw new Error('[Candle Chart]: "el" option must be provided');
@@ -23,6 +24,8 @@ export class CandleChart {
         this.canvas.width = this.width;
         this.canvas.height = this.height;
         this.chartMargin = 30;
+        this.infoBarWidth = 80;
+        this.canvas.width += this.infoBarWidth;
         this.canvas.height = this.height + this.chartMargin;
         this.ctx = this.canvas.getContext('2d');
 
@@ -36,28 +39,29 @@ export class CandleChart {
     private drawChart() {
         if (!this.ctx) return;
 
-        // Determining the maximum and minimum values for scaling
         const prices = this.data.flatMap(bar => [bar.high, bar.low]);
         const maxPrice = Math.max(...prices);
         const minPrice = Math.min(...prices);
         const priceRange = maxPrice - minPrice;
-
-        // Calculate the scaling factor
         const scaleY = (this.height - this.chartMargin) / priceRange;
-        this.ctx.clearRect(0, 0, this.width, this.canvas.height);
-        this.data.forEach((bar, index) => {
-            const x = index * (10 + 2);  // candle width + gap
-            this.drawCandle(bar, x, scaleY, minPrice);
-        });
 
-        const dateDisplayInterval = Math.ceil(this.data.length / (this.width / 50));
+        this.ctx.clearRect(0, 0, this.width + this.infoBarWidth, this.canvas.height);
         this.data.forEach((bar, index) => {
             const x = index * (10 + 2); // candle width + gap
+            if (x < this.width - 10) {
+                this.drawCandle(bar, x, scaleY, minPrice);
+            }
+        });
 
-            if (index % dateDisplayInterval === 0) {
+        const dateDisplayInterval = Math.ceil(this.data.length / ((this.width - this.infoBarWidth) / 50));
+        this.data.forEach((bar, index) => {
+            const x = index * (10 + 2); // candle width + gap
+            if (index % dateDisplayInterval === 0 && x < (this.width - this.infoBarWidth)) {
                 this.drawDate(bar.date, x);
             }
         });
+
+        this.drawInfoBar();
     }
 
     private drawCandle(bar: ConvertedBarData, x: number, scaleY: number, minPrice: number) {
@@ -80,6 +84,26 @@ export class CandleChart {
         // Drawing an Open-Close rectangle
         this.ctx.fillStyle = bar.open > bar.close ? 'red' : 'green';
         this.ctx.fillRect(x, this.height - Math.max(yOpen, yClose), 10, Math.abs(yOpen - yClose));
+    }
+
+    private drawInfoBar() {
+        if (!this.ctx) {
+            return;
+        }
+
+        this.ctx.fillStyle = 'rgba(245, 245, 245, 0.8)';
+        this.ctx.fillRect(this.width, 0, this.infoBarWidth, this.height);
+
+        this.data.forEach((bar, index) => {
+            const textX = this.width + 5;
+            const textY = index * 15 + this.chartMargin;
+
+            if (textY + 15 <= this.height && this.ctx) {
+                this.ctx.textAlign = 'left';
+                this.ctx.fillStyle = 'black';
+                this.ctx.fillText(`${bar.open.toFixed(5)}`, textX, textY);
+            }
+        });
     }
 
     private drawDate(date: Date, x: number) {
