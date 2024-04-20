@@ -8,11 +8,5 @@ body {
 
 .chart-wrapper {
   display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.loading-placeholder {
-  margin: 2rem 0;
+  justify-content: center;
 }
