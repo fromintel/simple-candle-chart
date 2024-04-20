@@ -1,13 +1,13 @@
 import { ConvertedBarData } from "../models/bar";
 
 export class CandleChart {
-    private readonly data: ConvertedBarData[];
     private readonly width: number;
     private readonly height: number;
     private readonly ctx: CanvasRenderingContext2D | null;
     private readonly chartMargin: number;
     private readonly infoBarWidth: number;
     private readonly maxDisplayableBars: number;
+    private data: ConvertedBarData[];
     private displayedBarsCount: number;
     private $el: HTMLElement;
     private canvas: HTMLCanvasElement;
@@ -204,5 +204,11 @@ export class CandleChart {
         const amPm = hours >= 12 ? 'PM' : 'AM';
         const twelveHour = hours % 12 || 12;
         return `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${twelveHour}:${minutes} ${amPm}`;
+    }
+
+    public updateData(newData: ConvertedBarData[]) {
+        this.data = newData;
+        this.displayedBarsCount = Math.min(newData.length, this.maxDisplayableBars);
+        this.drawChart();
     }
 }
