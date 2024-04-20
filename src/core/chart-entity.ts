@@ -1,13 +1,13 @@
 import { ConvertedBarData } from "../models/bar";
 
 export class CandleChart {
-    private readonly data: ConvertedBarData[];
     private readonly width: number;
     private readonly height: number;
     private readonly ctx: CanvasRenderingContext2D | null;
     private readonly chartMargin: number;
     private readonly infoBarWidth: number;
     private readonly maxDisplayableBars: number;
+    private data: ConvertedBarData[];
     private displayedBarsCount: number;
     private $el: HTMLElement;
     private canvas: HTMLCanvasElement;
@@ -91,7 +91,7 @@ export class CandleChart {
     }
 
     private calculateDateDisplayInterval() {
-        return Math.ceil(this.data.length / ((this.width - this.infoBarWidth) / 50));
+        return Math.ceil(this.displayedBarsCount / 10);
     }
 
     private drawChart() {
@@ -183,7 +183,8 @@ export class CandleChart {
     private drawDate(date: Date, x: number) {
         if (!this.ctx) return;
 
-        const adjustedX = x;
+        const padding = 5;
+        const effectiveX = Math.max(x, padding);
 
         const dateString = this.formatDate(date);
         this.ctx.font = '10px Arial';
@@ -193,8 +194,8 @@ export class CandleChart {
 
         const textY = this.height + 10;
 
-        if (adjustedX >= 0 && adjustedX <= (this.width - this.infoBarWidth - this.barWidth)) {
-            this.ctx.fillText(dateString, adjustedX + this.barWidth / 2, textY);
+        if (effectiveX + this.barWidth / 2 < this.width - this.infoBarWidth) {
+            this.ctx.fillText(dateString, effectiveX + this.barWidth / 2, textY);
         }
     }
 
@@ -204,5 +205,11 @@ export class CandleChart {
         const amPm = hours >= 12 ? 'PM' : 'AM';
         const twelveHour = hours % 12 || 12;
         return `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${twelveHour}:${minutes} ${amPm}`;
+    }
+
+    public updateData(newData: ConvertedBarData[]) {
+        this.data = newData;
+        this.displayedBarsCount = Math.min(newData.length, this.maxDisplayableBars);
+        this.drawChart();
     }
 }
