@@ -51,7 +51,6 @@ export class CandleChart {
         });
 
         const dateDisplayInterval = Math.ceil(this.data.length / (this.width / 50));
-        this.ctx.translate(0, this.height - this.chartMargin);
         this.data.forEach((bar, index) => {
             const x = index * (10 + 2); // candle width + gap
 
@@ -59,7 +58,6 @@ export class CandleChart {
                 this.drawDate(bar.date, x);
             }
         });
-        this.ctx.translate(0, -(this.height - this.chartMargin));
     }
 
     private drawCandle(bar: ConvertedBarData, x: number, scaleY: number, minPrice: number) {
@@ -89,10 +87,12 @@ export class CandleChart {
 
         const dateString = `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${date.getHours()}:${('0' + date.getMinutes()).slice(-2)}`;
         this.ctx.font = '10px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
         this.ctx.fillStyle = 'black';
-        this.ctx.fillText(dateString, x + 5, 50);
-    }
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'top';
 
+        const textY = this.height + 10;
+
+        this.ctx.fillText(dateString, x + 5, textY);
+    }
 }
