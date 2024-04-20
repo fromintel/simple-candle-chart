@@ -91,7 +91,7 @@ export class CandleChart {
     }
 
     private calculateDateDisplayInterval() {
-        return Math.ceil(this.data.length / ((this.width - this.infoBarWidth) / 50));
+        return Math.ceil(this.displayedBarsCount / 10);
     }
 
     private drawChart() {
@@ -183,7 +183,8 @@ export class CandleChart {
     private drawDate(date: Date, x: number) {
         if (!this.ctx) return;
 
-        const adjustedX = x;
+        const padding = 5;
+        const effectiveX = Math.max(x, padding);
 
         const dateString = this.formatDate(date);
         this.ctx.font = '10px Arial';
@@ -193,8 +194,8 @@ export class CandleChart {
 
         const textY = this.height + 10;
 
-        if (adjustedX >= 0 && adjustedX <= (this.width - this.infoBarWidth - this.barWidth)) {
-            this.ctx.fillText(dateString, adjustedX + this.barWidth / 2, textY);
+        if (effectiveX + this.barWidth / 2 < this.width - this.infoBarWidth) {
+            this.ctx.fillText(dateString, effectiveX + this.barWidth / 2, textY);
         }
     }
 
