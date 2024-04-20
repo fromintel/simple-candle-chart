@@ -7,8 +7,8 @@ export class CandleChart {
     private readonly ctx: CanvasRenderingContext2D | null;
     private readonly chartMargin: number;
     private readonly infoBarWidth: number;
-    private readonly displayedBarsCount: number;
     private readonly maxDisplayableBars: number;
+    private displayedBarsCount: number;
     private $el: HTMLElement;
     private canvas: HTMLCanvasElement;
     private barWidth: number = 10;
@@ -119,11 +119,23 @@ export class CandleChart {
     }
 
     private handleScroll(event: WheelEvent) {
-        event.preventDefault();
-        const direction = event.deltaY > 0 ? 1 : -1;
-        this.viewStart += direction;
+        if (event.deltaX !== 0) return;
 
-        this.viewStart = Math.max(0, Math.min(this.viewStart, this.data.length - this.displayedBarsCount));
+        event.preventDefault();
+        const zoomIntensity = 1;
+
+        const newDisplayedBarsCount = this.displayedBarsCount - event.deltaY / Math.abs(event.deltaY) * zoomIntensity;
+
+        const minBarsToShow = 10;
+        const maxBarsToShow = 60;
+
+        this.displayedBarsCount = Math.max(
+            minBarsToShow,
+            Math.min(newDisplayedBarsCount, maxBarsToShow)
+        );
+
+        this.barWidth = (this.width - this.infoBarWidth) / this.displayedBarsCount - this.barGap;
+
         this.drawChart();
     }
 
