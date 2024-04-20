@@ -7,6 +7,7 @@ export class CandleChart {
     private readonly height: number;
     private canvas: HTMLCanvasElement;
     private readonly ctx: CanvasRenderingContext2D | null;
+    private readonly chartMargin: number;
 
     constructor(options: { el: HTMLElement, data: ConvertedBarData[], width?: number, height?: number, animationSpeed?: number }) {
         if (!options.el) throw new Error('[Candle Chart]: "el" option must be provided');
@@ -21,6 +22,8 @@ export class CandleChart {
         this.canvas = this.$el.querySelector('canvas')!;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
+        this.chartMargin = 30;
+        this.canvas.height = this.height + this.chartMargin;
         this.ctx = this.canvas.getContext('2d');
 
         this.init();
@@ -40,23 +43,23 @@ export class CandleChart {
         const priceRange = maxPrice - minPrice;
 
         // Calculate the scaling factor
-        const scaleY = this.height / priceRange;
-
-        this.ctx.clearRect(0, 0, this.width, this.height);
+        const scaleY = (this.height - this.chartMargin) / priceRange;
+        this.ctx.clearRect(0, 0, this.width, this.canvas.height);
         this.data.forEach((bar, index) => {
             const x = index * (10 + 2);  // candle width + gap
             this.drawCandle(bar, x, scaleY, minPrice);
         });
 
         const dateDisplayInterval = Math.ceil(this.data.length / (this.width / 50));
+        this.ctx.translate(0, this.height - this.chartMargin);
         this.data.forEach((bar, index) => {
-            const x = index * (10 + 2);
-            this.drawCandle(bar, x, scaleY, minPrice);
+            const x = index * (10 + 2); // candle width + gap
 
             if (index % dateDisplayInterval === 0) {
                 this.drawDate(bar.date, x);
             }
         });
+        this.ctx.translate(0, -(this.height - this.chartMargin));
     }
 
     private drawCandle(bar: ConvertedBarData, x: number, scaleY: number, minPrice: number) {
@@ -84,10 +87,12 @@ export class CandleChart {
     private drawDate(date: Date, x: number) {
         if (!this.ctx) return;
 
-        const dateString = `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${date.getHours()}:${date.getMinutes()}`;
+        const dateString = `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${date.getHours()}:${('0' + date.getMinutes()).slice(-2)}`;
         this.ctx.font = '10px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(dateString, x + 5, this.height - 10);
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillStyle = 'black';
+        this.ctx.fillText(dateString, x + 5, 50);
     }
 
 }
