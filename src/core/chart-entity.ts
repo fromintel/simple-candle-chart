@@ -85,7 +85,12 @@ export class CandleChart {
     private drawDate(date: Date, x: number) {
         if (!this.ctx) return;
 
-        const dateString = `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${date.getHours()}:${('0' + date.getMinutes()).slice(-2)}`;
+        const hours = date.getHours();
+        const minutes = ('0' + date.getMinutes()).slice(-2);
+        const amPm = hours >= 12 ? 'PM' : 'AM';
+        const twelveHour = hours % 12 || 12;
+
+        const dateString = `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${twelveHour}:${minutes} ${amPm}`;
         this.ctx.font = '10px Arial';
         this.ctx.fillStyle = 'black';
         this.ctx.textAlign = 'center';
