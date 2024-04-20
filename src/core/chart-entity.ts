@@ -14,6 +14,9 @@ export class CandleChart {
     private barWidth: number = 10;
     private barGap: number = 2;
     private viewStart = 0;
+    private isDragging: boolean = false;
+    private dragStartX: number = 0;
+    private dragStartViewStart: number = 0;
 
     constructor(options: { el: HTMLElement, data: ConvertedBarData[], width?: number, height?: number, animationSpeed?: number }) {
         if (!options.el) throw new Error('[Candle Chart]: "el" option must be provided');
@@ -40,6 +43,11 @@ export class CandleChart {
             this.handleScroll(event);
         });
 
+        this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+        this.canvas.addEventListener('mouseleave', this.handleMouseUp.bind(this));
+
         this.ctx = this.canvas.getContext('2d');
 
         this.init();
@@ -49,14 +57,48 @@ export class CandleChart {
         this.drawChart();
     }
 
-    private drawChart() {
-        if (!this.ctx) return;
+    private handleMouseDown(event: MouseEvent) {
+        this.isDragging = true;
+        this.dragStartX = event.clientX;
+        this.dragStartViewStart = this.viewStart;
+    }
 
+    private handleMouseMove(event: MouseEvent) {
+        if (this.isDragging) {
+            const dx = event.clientX - this.dragStartX;
+            // Convert dx in pixels to dx in bars (reverse direction for natural drag effect)
+            const dxInBars = -Math.floor(dx / (this.barWidth + this.barGap));
+            this.viewStart = Math.max(0, Math.min(this.dragStartViewStart + dxInBars, this.data.length - this.displayedBarsCount));
+            this.drawChart();
+        }
+    }
+
+    private handleMouseUp() {
+        this.isDragging = false;
+    }
+
+    private calculateScaleY() {
         const prices = this.data.flatMap(bar => [bar.high, bar.low]);
         const maxPrice = Math.max(...prices);
         const minPrice = Math.min(...prices);
         const priceRange = maxPrice - minPrice;
-        const scaleY = (this.height - this.chartMargin) / priceRange;
+        return (this.height - this.chartMargin) / priceRange;
+    }
+
+    private calculateMinPrice() {
+        const prices = this.data.flatMap(bar => [bar.high, bar.low]);
+        return Math.min(...prices);
+    }
+
+    private calculateDateDisplayInterval() {
+        return Math.ceil(this.data.length / ((this.width - this.infoBarWidth) / 50));
+    }
+
+    private drawChart() {
+        if (!this.ctx) return;
+
+        const scaleY = this.calculateScaleY();
+        const minPrice = this.calculateMinPrice();
 
         this.ctx.clearRect(0, 0, this.width + this.infoBarWidth, this.canvas.height);
 
@@ -66,18 +108,9 @@ export class CandleChart {
                 const bar = this.data[barIndex];
                 const x = i * (this.barWidth + this.barGap);
                 this.drawCandle(bar, x, scaleY, minPrice);
-            }
-        }
 
-        const dateDisplayInterval = Math.ceil(this.data.length / ((this.width - this.infoBarWidth) / 50));
-        for (let i = this.viewStart; i < this.viewStart + this.displayedBarsCount; i++) {
-            if (i < this.data.length) {
-                const bar = this.data[i];
-                const x = (i - this.viewStart) * (this.barWidth + this.barGap);
-                this.drawCandle(bar, x, scaleY, minPrice);
-
-                if ((i - this.viewStart) % dateDisplayInterval === 0) {
-                    this.drawDate(bar.date, i);
+                if (barIndex % this.calculateDateDisplayInterval() === 0) {
+                    this.drawDate(bar.date, x);
                 }
             }
         }
@@ -135,25 +168,29 @@ export class CandleChart {
         });
     }
 
-    private drawDate(date: Date, index: number) {
+    private drawDate(date: Date, x: number) {
         if (!this.ctx) return;
 
-        const adjustedX = (index - this.viewStart) * (this.barWidth + this.barGap);
+        const adjustedX = x;
 
-        if (adjustedX >= 0 && adjustedX < (this.width - this.infoBarWidth)) {
-            const hours = date.getHours();
-            const minutes = ('0' + date.getMinutes()).slice(-2);
-            const amPm = hours >= 12 ? 'PM' : 'AM';
-            const twelveHour = hours % 12 || 12;
+        const dateString = this.formatDate(date);
+        this.ctx.font = '10px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'top';
+        this.ctx.fillStyle = 'black';
 
-            const dateString = `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${twelveHour}:${minutes} ${amPm}`;
-            this.ctx.font = '10px Arial';
-            this.ctx.fillStyle = 'black';
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'top';
+        const textY = this.height + 10;
 
-            const textY = this.height + 10;
+        if (adjustedX >= 0 && adjustedX <= (this.width - this.infoBarWidth - this.barWidth)) {
             this.ctx.fillText(dateString, adjustedX + this.barWidth / 2, textY);
         }
+    }
+
+    private formatDate(date: Date): string {
+        const hours = date.getHours();
+        const minutes = ('0' + date.getMinutes()).slice(-2);
+        const amPm = hours >= 12 ? 'PM' : 'AM';
+        const twelveHour = hours % 12 || 12;
+        return `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${twelveHour}:${minutes} ${amPm}`;
     }
 }
