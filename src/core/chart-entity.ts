@@ -1,5 +1,6 @@
 import { ConvertedBarData } from "../models/bar";
 import { Candle } from "./candle";
+import { ChartDataConfig } from "../models/chart-data";
 
 export class CandleChart {
     private readonly width: number;
@@ -19,43 +20,50 @@ export class CandleChart {
     private dragStartX: number = 0;
     private dragStartViewStart: number = 0;
 
-    constructor(options: { el: HTMLElement, data: ConvertedBarData[], width?: number, height?: number, animationSpeed?: number }) {
-        if (!options.el) throw new Error('[Candle Chart]: "el" option must be provided');
-        if (!options.data) throw new Error('[Candle Chart]: "data" option must be provided');
+    constructor(options: ChartDataConfig) {
+        this.validateOptions(options);
 
-        this.$el = options.el;
         this.data = options.data;
+
         this.width = options.width || 800;
         this.height = options.height || 400;
 
+        this.$el = options.el;
         this.$el.innerHTML = '<canvas></canvas>';
+
+        this.chartMargin = 30;
+        this.infoBarWidth = 80;
         this.canvas = this.$el.querySelector('canvas')!;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
-        this.chartMargin = 30;
-        this.infoBarWidth = 80;
         this.canvas.width += this.infoBarWidth;
         this.canvas.height = this.height + this.chartMargin;
+
+        this.ctx = this.canvas.getContext('2d');
 
         this.maxDisplayableBars = Math.floor((this.width - this.infoBarWidth) / (this.barWidth + this.barGap));
         this.displayedBarsCount = Math.min(options.data.length, this.maxDisplayableBars);
 
-        this.canvas.addEventListener('wheel', (event) => {
-            this.handleScroll(event);
-        });
-
-        this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
-        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
-        this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
-        this.canvas.addEventListener('mouseleave', this.handleMouseUp.bind(this));
-
-        this.ctx = this.canvas.getContext('2d');
+        this.attachEventListeners();
 
         this.init();
     }
 
     private init() {
         this.drawChart();
+    }
+
+    private validateOptions(options: ChartDataConfig): void {
+        if (!options.el) throw new Error('[Candle Chart]: "el" option must be provided');
+        if (!options.data) throw new Error('[Candle Chart]: "data" option must be provided');
+    }
+
+    private attachEventListeners(): void {
+        this.canvas.addEventListener('wheel', this.handleScroll.bind(this));
+        this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+        this.canvas.addEventListener('mouseleave', this.handleMouseUp.bind(this));
     }
 
     private handleMouseDown(event: MouseEvent) {
