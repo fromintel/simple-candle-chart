@@ -1,6 +1,7 @@
 import { ConvertedCandleData } from "../models/candle";
 import { Candle } from "./candle";
 import { ChartDataConfig } from "../models/chart-data";
+import { InfoBar } from "./info-bar";
 
 export class CandleChart {
     private readonly ctx: CanvasRenderingContext2D;
@@ -18,6 +19,7 @@ export class CandleChart {
     private isDragging: boolean = false;
     private dragStartX: number = 0;
     private dragStartViewStart: number = 0;
+    private infoBar: InfoBar;
 
     constructor(options: ChartDataConfig) {
         this.validateOptions(options);
@@ -28,6 +30,9 @@ export class CandleChart {
         // Element initialization
         this.canvas = this.initializeCanvas(options.el);
         this.ctx = this.canvas.getContext('2d')!;
+
+        // initialize additional entities
+        this.infoBar = new InfoBar(this.data, { width: this.width, height: this.height, chartMargin: this.chartMargin });
 
         // Setup dimensions based on current data and options
         this.maxDisplayableBars = Math.floor((this.width - this.infoBarWidth) / (this.barWidth + this.barGap));
@@ -129,27 +134,7 @@ export class CandleChart {
         this.ctx.clearRect(0, 0, this.width + this.infoBarWidth, this.canvas.height);
 
         this.drawDatesBar()
-        this.drawInfoBar();
-    }
-
-    private drawInfoBar() {
-        if (!this.ctx) {
-            return;
-        }
-
-        this.ctx.fillStyle = 'rgba(245, 245, 245, 0.8)';
-        this.ctx.fillRect(this.width, 0, this.infoBarWidth, this.height);
-
-        this.data.forEach((bar, index) => {
-            const textX = this.width + 5;
-            const textY = index * 15 + this.chartMargin;
-
-            if (textY + 15 <= this.height && this.ctx) {
-                this.ctx.textAlign = 'left';
-                this.ctx.fillStyle = 'black';
-                this.ctx.fillText(`${bar.open.toFixed(5)}`, textX, textY);
-            }
-        });
+        this.infoBar.draw(this.ctx);
     }
 
     private drawDatesBar(): void {
