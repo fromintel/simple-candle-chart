@@ -1,4 +1,4 @@
-import { ConvertedBarData } from "../models/bar";
+import { ConvertedCandleData } from "../models/candle";
 
 export class Candle {
     private ctx: CanvasRenderingContext2D;
@@ -16,7 +16,7 @@ export class Candle {
     constructor(
         ctx: CanvasRenderingContext2D,
         barWidth: number,
-        data: ConvertedBarData,
+        data: ConvertedCandleData,
         xPosition: number,
         scaleY: number,
         minPrice: number,
