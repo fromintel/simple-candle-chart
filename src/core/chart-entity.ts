@@ -2,6 +2,7 @@ import { ConvertedCandleData } from "../models/candle";
 import { Candle } from "./candle";
 import { ChartDataConfig } from "../models/chart-data";
 import { InfoBar } from "./info-bar";
+import { DateBar } from "./date-bar";
 
 export class CandleChart {
     private readonly ctx: CanvasRenderingContext2D;
@@ -20,6 +21,7 @@ export class CandleChart {
     private dragStartX: number = 0;
     private dragStartViewStart: number = 0;
     private infoBar: InfoBar;
+    private dateBar: DateBar;
 
     constructor(options: ChartDataConfig) {
         this.validateOptions(options);
@@ -31,12 +33,18 @@ export class CandleChart {
         this.canvas = this.initializeCanvas(options.el);
         this.ctx = this.canvas.getContext('2d')!;
 
-        // initialize additional entities
-        this.infoBar = new InfoBar(this.data, { width: this.width, height: this.height, chartMargin: this.chartMargin });
-
         // Setup dimensions based on current data and options
         this.maxDisplayableBars = Math.floor((this.width - this.infoBarWidth) / (this.barWidth + this.barGap));
         this.displayedBarsCount = Math.min(this.data.length, this.maxDisplayableBars);
+
+        // initialize additional entities
+        this.infoBar = new InfoBar(this.data, { width: this.width, height: this.height, chartMargin: this.chartMargin });
+        this.dateBar = new DateBar({
+            height: this.height,
+            barWidth: this.barWidth,
+            width: this.width,
+            infoBarWidth: this.infoBarWidth
+        });
 
         // Attach event listeners
         this.attachEventListeners();
@@ -58,7 +66,7 @@ export class CandleChart {
         return canvas;
     }
 
-    private init() {
+    private init(): void {
         this.drawChart();
     }
 
@@ -131,55 +139,45 @@ export class CandleChart {
     private drawChart() {
         if (!this.ctx) return;
 
-        this.ctx.clearRect(0, 0, this.width + this.infoBarWidth, this.canvas.height);
-
-        this.drawDatesBar()
-        this.infoBar.draw(this.ctx);
+        this.clearCanvas();
+        this.drawCandlesAndDates();
+        this.drawInfoBar();
     }
 
-    private drawDatesBar(): void {
+    private clearCanvas() {
+        this.ctx.clearRect(0, 0, this.width + this.infoBarWidth, this.canvas.height);
+    }
+
+    private drawCandlesAndDates() {
         const scaleY = this.calculateScaleY();
         const minPrice = this.calculateMinPrice();
 
         for (let i = 0; i < this.displayedBarsCount; i++) {
             const barIndex = this.viewStart + i;
             if (barIndex < this.data.length) {
-                const bar = this.data[barIndex];
-                const x = i * (this.barWidth + this.barGap);
-                new Candle(this.ctx, this.barWidth, bar, x, scaleY, minPrice, this.height).draw();
-
-                if (barIndex % this.calculateDateDisplayInterval() === 0) {
-                    this.drawDateItem(bar.date, x);
-                }
+                this.drawCandle(barIndex, i, scaleY, minPrice);
+                this.drawDate(barIndex, i);
             }
         }
     }
 
-    private drawDateItem(date: Date, x: number) {
-        if (!this.ctx) return;
+    private drawCandle(barIndex: number, i: number, scaleY: number, minPrice: number) {
+        const bar = this.data[barIndex];
+        const x = i * (this.barWidth + this.barGap);
+        new Candle(this.ctx, this.barWidth, bar, x, scaleY, minPrice, this.height).draw();
+    }
 
-        const padding = 5;
-        const effectiveX = Math.max(x, padding);
-
-        const dateString = this.formatDate(date);
-        this.ctx.font = '10px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'top';
-        this.ctx.fillStyle = 'black';
-
-        const textY = this.height + 10;
-
-        if (effectiveX + this.barWidth / 2 < this.width - this.infoBarWidth) {
-            this.ctx.fillText(dateString, effectiveX + this.barWidth / 2, textY);
+    private drawDate(barIndex: number, i: number) {
+        if (barIndex % this.calculateDateDisplayInterval() === 0) {
+            const x = i * (this.barWidth + this.barGap);
+            this.dateBar.setDate(this.data[barIndex].date);
+            this.dateBar.setPositionX(x);
+            this.dateBar.draw(this.ctx);
         }
     }
 
-    private formatDate(date: Date): string {
-        const hours = date.getHours();
-        const minutes = ('0' + date.getMinutes()).slice(-2);
-        const amPm = hours >= 12 ? 'PM' : 'AM';
-        const twelveHour = hours % 12 || 12;
-        return `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${twelveHour}:${minutes} ${amPm}`;
+    private drawInfoBar(): void {
+        this.infoBar.draw(this.ctx);
     }
 
     public updateData(newData: ConvertedCandleData[]) {
