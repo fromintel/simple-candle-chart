@@ -3,6 +3,7 @@ import { Candle } from "./candle";
 import { ChartDataConfig } from "../models/chart-data";
 import { InfoBar } from "./info-bar";
 import { DateBar } from "./date-bar";
+import { ChartCalculator } from "../utils/chart-calculations";
 
 export class CandleChart {
     private readonly ctx: CanvasRenderingContext2D;
@@ -120,20 +121,17 @@ export class CandleChart {
     }
 
     private calculateScaleY() {
-        const prices = this.data.flatMap(bar => [bar.high, bar.low]);
-        const maxPrice = Math.max(...prices);
-        const minPrice = Math.min(...prices);
-        const priceRange = maxPrice - minPrice;
-        return (this.height - this.chartMargin) / priceRange;
+        const prices: number[] = this.data.flatMap((bar: ConvertedCandleData) => [bar.high, bar.low]);
+        return ChartCalculator.calculateScaleY(prices, this.height, this.chartMargin);
     }
 
     private calculateMinPrice() {
         const prices = this.data.flatMap(bar => [bar.high, bar.low]);
-        return Math.min(...prices);
+        return ChartCalculator.calculateMinPrice(prices);
     }
 
     private calculateDateDisplayInterval() {
-        return Math.ceil(this.displayedBarsCount / 10);
+        return ChartCalculator.calculateDateDisplayInterval(this.displayedBarsCount);
     }
 
     private drawChart() {
