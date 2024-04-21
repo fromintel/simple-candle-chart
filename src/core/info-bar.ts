@@ -15,7 +15,7 @@ export class InfoBar implements Bar {
         this.chartMargin = config.chartMargin;
     }
 
-    draw(ctx: CanvasRenderingContext2D): void {
+    public draw(ctx: CanvasRenderingContext2D): void {
         this.prepareBackground(ctx);
         this.drawInfoText(ctx);
     }
@@ -29,7 +29,7 @@ export class InfoBar implements Bar {
         ctx.textAlign = 'left';
         ctx.fillStyle = 'black';
 
-        this.data.forEach((bar, index) => {
+        this.data.forEach((bar: ConvertedCandleData, index: number) => {
             const { textX, textY } = this.calculateTextPosition(index);
             if (this.isPositionInBounds(textY)) {
                 ctx.fillText(`${bar.open.toFixed(5)}`, textX, textY);

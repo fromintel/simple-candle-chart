@@ -25,14 +25,14 @@ export class CandleChartController {
     private handleMouseDown(event: MouseEvent): void {
         this.isDragging = true;
         this.dragStartX = event.clientX;
-        this.dragStartViewStart = this.renderer.getViewStart();
+        this.dragStartViewStart = this.renderer.getViewStart;
     }
 
     private handleMouseMove(event: MouseEvent): void {
         if (this.isDragging) {
             const dx = event.clientX - this.dragStartX;
-            const dxInBars = -Math.floor(dx / (this.renderer.getBarWidth() + this.renderer.getBarGap()));
-            this.viewStart = Math.max(0, Math.min(this.dragStartViewStart + dxInBars, this.renderer.getDataLength() - this.renderer.getDisplayedBarsCount()));
+            const dxInBars = -Math.floor(dx / (this.renderer.getBarWidth + this.renderer.getBarGap));
+            this.viewStart = Math.max(0, Math.min(this.dragStartViewStart + dxInBars, this.renderer.getDataLength - this.renderer.getDisplayedBarsCount));
             this.renderer.setViewStart(this.viewStart);
             this.renderer.drawChart();
         }
