@@ -1,4 +1,4 @@
-import { ConvertedBarData } from "../models/bar";
+import { ConvertedCandleData } from "../models/candle";
 import { Candle } from "./candle";
 import { ChartDataConfig } from "../models/chart-data";
 
@@ -11,7 +11,7 @@ export class CandleChart {
     private readonly infoBarWidth: number = 80;
     private readonly barGap: number = 2;
     private readonly maxDisplayableBars: number;
-    private data: ConvertedBarData[];
+    private data: ConvertedCandleData[];
     private displayedBarsCount: number;
     private barWidth: number = 10;
     private viewStart = 0;
@@ -197,7 +197,7 @@ export class CandleChart {
         return `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${twelveHour}:${minutes} ${amPm}`;
     }
 
-    public updateData(newData: ConvertedBarData[]) {
+    public updateData(newData: ConvertedCandleData[]) {
         this.data = newData;
         this.displayedBarsCount = Math.min(newData.length, this.maxDisplayableBars);
         this.drawChart();

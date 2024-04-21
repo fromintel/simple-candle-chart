@@ -1,4 +1,4 @@
-export interface ConvertedBarData {
+export interface ConvertedCandleData {
     date: Date;
     open: number;
     high: number;
@@ -7,7 +7,7 @@ export interface ConvertedBarData {
     volume: number;
 }
 
-export interface InitialBarData {
+export interface InitialCandleData {
     Time: number;
     Open: number;
     High: number;
